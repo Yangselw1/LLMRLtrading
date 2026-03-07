@@ -62,5 +62,3 @@ python run_backtest.py --all-paper-tickers --signal-only
 --no-charts             Skip chart generation
 --output-dir results/   Custom output directory
 ```
-# LLMRLtrading
-# LLMRLtrading
