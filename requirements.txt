@@ -1,0 +1,9 @@
+yfinance
+pandas
+numpy
+matplotlib
+anthropic
+requests
+feedparser
+ta
+python-dotenv
