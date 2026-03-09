@@ -1,15 +1,75 @@
+"""
+GRPO Analyst — Thin Wrapper Around GRPOTrainer for Inference
 
-# Unsupported bytecode in file __pycache__/grpo_analyst.cpython-310.pyc
-# Unsupported Python version, 3.10, for decompilation
+Provides the same analyze() interface as LLMAnalyst and ICRLAnalyst,
+making it interchangeable in the backtest pipeline.
+"""
+import logging
+from typing import Dict, Optional, Tuple
 
-# Unsupported Python version, 3.10, for decompilation
-# Can't uncompile __pycache__/grpo_analyst.cpython-310.pyc
-# uncompyle6 version 3.9.3
-# Python bytecode version base 3.10 (3439)
-# Decompiled from: Python 3.10.0 (v3.10.0:b494f5935c, Oct  4 2021, 14:59:19) [Clang 12.0.5 (clang-1205.0.22.11)]
-# Embedded file name: /Users/sewonyang/PycharmProjects/trading_r1_backtest/grpo_analyst.py
-# Compiled at: 2026-03-05 21:41:21
-# Size of source mod 2**32: 3367 bytes
+import config
+from llm_analyst import rule_based_decision
 
-Unsupported Python version, 3.10, for decompilation
+logger = logging.getLogger(__name__)
 
+
+class GRPOAnalyst:
+    """
+    Trading analyst powered by a GRPO-trained local model.
+
+    Uses GRPOTrainer.predict() to generate decisions, with a
+    rule-based fallback if the model fails to produce a valid decision.
+    """
+
+    def __init__(self, trainer, observer=None):
+        """
+        Args:
+            trainer: GRPOTrainer instance (already loaded)
+            observer: Observer for logging
+        """
+        self.trainer = trainer
+        self.obs = observer
+
+    def analyze(
+        self,
+        snapshot: Dict,
+        news: Dict = None,
+        signal_label: str = None,
+    ) -> Tuple[str, str]:
+        """
+        Generate a trading decision from the local GRPO model.
+
+        Args:
+            snapshot: Market data snapshot
+            news: News data
+            signal_label: Algorithm S1 label
+
+        Returns:
+            (reasoning_text, decision)
+        """
+        from grpo_trainer import format_state_for_local_model
+
+        ticker = snapshot.get("ticker", "UNKNOWN")
+        date = snapshot.get("date", "")
+
+        try:
+            state_text = format_state_for_local_model(
+                snapshot, news, signal_label or ""
+            )
+            reasoning, decision = self.trainer.predict(state_text)
+
+            if decision and decision in config.ACTION_LABELS:
+                if self.obs:
+                    self.obs._print(
+                        f"    GRPO Decision: {decision} ({ticker} {date})",
+                        2  # NORMAL
+                    )
+                return reasoning, decision
+
+        except Exception as e:
+            logger.warning(f"GRPO prediction failed for {ticker} {date}: {e}")
+
+        # Fallback to rule-based
+        logger.info(f"GRPO: Falling back to rule-based for {ticker} {date}")
+        thesis, decision = rule_based_decision(snapshot, signal_label)
+        return thesis, decision

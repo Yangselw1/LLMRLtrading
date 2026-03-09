@@ -31,57 +31,92 @@ except ImportError:
 # Prompt Construction (mirrors Tauric-TR1-DB format)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-SYSTEM_PROMPT = """You are a senior financial analyst producing a structured investment thesis.
+SYSTEM_PROMPT = """You are a quantitative equity analyst at a systematic macro fund managing $50B+ in assets. You produce research-grade investment theses that drive real portfolio allocation decisions.
 
-Your task: Analyze the provided market data for the given asset and produce:
-1. A structured investment thesis covering multiple perspectives
-2. A final trading recommendation
+TASK: Analyze the provided market data snapshot for a single equity. Produce a structured analytical thesis and a final portfolio action.
 
-FORMAT YOUR RESPONSE EXACTLY AS FOLLOWS:
+PORTFOLIO ACTIONS — Each action maps to a specific portfolio weight:
+  STRONG BUY  → +100% position (max conviction long — expect large move UP)
+  BUY         → +50% position  (moderate conviction long)
+  HOLD        →   0% position  (flat — no edge, or conflicting signals)
+  SELL        → -50% position  (moderate conviction short)
+  STRONG SELL → -100% position (max conviction short — expect large move DOWN)
+
+WHEN TO HOLD:
+  • Technical and fundamental signals conflict with no clear resolution
+  • Expected move magnitude does not justify transaction costs (~10 bps round-trip)
+  • Volatility regime is elevated and risk/reward is unfavorable
+
+HOLDING PERIOD: ~5 trading days (1 calendar week).
+  • Ignore intraday noise. Discount signals requiring >30 days to play out.
+  • Focus on what drives price in the next 5 sessions: momentum, mean-reversion
+    setups, catalyst events, and any earnings within the window.
+
+FORMAT YOUR RESPONSE AS:
 
 <analysis>
 
-<fundamentals>
-Analyze the company's financial health, valuation metrics, growth prospects.
-Support claims with specific data points from the provided context.
-</fundamentals>
-
 <technicals>
-Analyze price action, momentum, trend, and volatility indicators.
-Reference specific indicator values and what they suggest.
+Evaluate momentum, trend, and volatility signals.
+For each key indicator, state: (a) its current value, (b) what it implies for the
+next 5 days, and (c) your confidence in that implication.
+Focus on: RSI, MACD crossover state, Bollinger Band position, ADX trend strength,
+50/200 SMA alignment, Stochastic.
+Explicitly flag conflicting signals — e.g., "RSI is oversold at 28, but ADX=42 shows
+a strong downtrend — in strong trends, RSI stays oversold. This is likely a momentum
+continuation, not a reversal setup."
 </technicals>
 
+<fundamentals>
+Evaluate valuation and quality metrics.
+Note whether fundamentals support or contradict the technical picture.
+Flag extreme valuations (P/E > 2x sector, elevated debt/equity, margin compression).
+</fundamentals>
+
 <sentiment>
-Analyze news sentiment, analyst recommendations, and market perception.
-Cite specific headlines or recommendation changes where relevant.
+Evaluate analyst consensus, recent recommendation changes, and news flow.
+Identify any binary events (earnings, regulatory, legal) within the holding period.
+Weight recent headlines more heavily.
 </sentiment>
 
-<macro>
-Consider broader market conditions and sector trends.
-</macro>
+<risk_assessment>
+State the 2-3 key risks to the thesis, ordered by probability × impact.
+For the primary risk, describe what price action would invalidate the thesis.
+Note the current volatility regime (elevated / normal / compressed) and its
+implication for position sizing.
+</risk_assessment>
 
 <conclusion>
-Synthesize all perspectives into a cohesive investment view.
-State the key risk factors and catalysts.
+Synthesize all perspectives into a single coherent view. State:
+  1. Your directional thesis in one sentence
+  2. Your confidence level (high / moderate / low) and why
+  3. The primary catalyst and primary risk
+  4. Why this specific action and not a stronger or weaker one
 
 DECISION: [[[STRONG SELL / SELL / HOLD / BUY / STRONG BUY]]]
 </conclusion>
 
 </analysis>
 
-IMPORTANT RULES:
+RULES:
 - Your DECISION must be exactly one of: STRONG SELL, SELL, HOLD, BUY, STRONG BUY
-- Place your decision in triple brackets: [[[DECISION]]]
-- Ground every claim in the provided data — do not hallucinate facts
-- Be concise but thorough (target 400-600 words total)
-- Consider a ~1 week holding period for your recommendation
+- Wrap your decision in triple brackets: [[[DECISION]]]
+- Every claim must reference specific data from the provided snapshot
+- When indicators conflict, state which you weight more heavily and justify why
+- If an Algorithm S1 signal is provided, consider it as a reference — you may follow
+  or override it, but overrides should be well-justified
 """
 
 
-def build_data_prompt(snapshot: Dict, news: Dict = None) -> str:
+def build_data_prompt(snapshot: Dict, news: Dict = None, signal_label: str = None) -> str:
     """
     Assemble a structured prompt from collected data.
     Mirrors the categorical-sampled data format from Tauric-TR1-DB.
+
+    Args:
+        snapshot: Market data snapshot from DataCollector
+        news: News data bucketed by temporal horizon
+        signal_label: Algorithm S1 signal label (optional reference signal)
     """
     ticker = snapshot.get("ticker", "UNKNOWN")
     date = snapshot.get("date", "")
@@ -192,6 +227,14 @@ def build_data_prompt(snapshot: Dict, news: Dict = None) -> str:
         sections.append("  No recent news available.")
     sections.append("</news>")
 
+    # ── Algorithm S1 Signal (reference) ────────────────────────────────
+    if signal_label:
+        sections.append("\n<signal_reference>")
+        sections.append(f"  Algorithm S1 signal: {signal_label}")
+        sections.append(f"  (Mechanical signal from volatility-normalized multi-horizon momentum scoring)")
+        sections.append(f"  You may follow or override this signal. Overrides should be well-justified.")
+        sections.append("</signal_reference>")
+
     return "\n".join(sections)
 
 
@@ -239,7 +282,8 @@ def parse_decision(response_text: str) -> Optional[str]:
     return None
 
 
-def call_claude(prompt: str, observer=None, ticker: str = "", date: str = "") -> Tuple[Optional[str], Optional[str]]:
+def call_claude(prompt: str, observer=None, ticker: str = "", date: str = "",
+                system_prompt: str = None) -> Tuple[Optional[str], Optional[str]]:
     """
     Call Claude API with retry logic and exponential backoff.
     Returns (full_response_text, parsed_decision).
@@ -261,7 +305,7 @@ def call_claude(prompt: str, observer=None, ticker: str = "", date: str = "") ->
                 model=config.LLM_MODEL,
                 max_tokens=config.LLM_MAX_TOKENS,
                 temperature=config.LLM_TEMPERATURE,
-                system=SYSTEM_PROMPT,
+                system=system_prompt or SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": prompt}],
             )
             latency = time.time() - t0
@@ -399,7 +443,7 @@ class LLMAnalyst:
             self.obs.store_snapshot(ticker, date, snapshot)
 
         if self.use_llm:
-            prompt = build_data_prompt(snapshot, news)
+            prompt = build_data_prompt(snapshot, news, signal_label=signal_label)
 
             # Log & store the prompt
             if self.obs:

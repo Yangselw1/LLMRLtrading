@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+results/
+checkpoints/
+*.egg-info/
+.idea/
+.claude/
+.ai/

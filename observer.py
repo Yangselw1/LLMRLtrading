@@ -650,6 +650,99 @@ class Observer:
         )
         self._print(summary_df.to_string(), MINIMAL)
 
+    # ── RL Mode Logging ─────────────────────────────────────────────────
+
+    def log_rl_mode(self, mode: str, params: Dict):
+        """Log which RL mode is being used."""
+        self._print(
+            f"\n  {Colors.BOLD}{Colors.CYAN}RL Mode: {mode.upper()}{Colors.RESET}",
+            MINIMAL
+        )
+        for k, v in params.items():
+            self._print(f"    {k}: {v}", NORMAL)
+        self._audit("rl_mode", {"mode": mode, **params})
+
+    def log_reward_computed(self, ticker: str, entry_date: str, exit_date: str,
+                            action: str, reward: float, raw_pnl: float):
+        """Log a computed reward for a completed trade."""
+        color = Colors.GREEN if reward > 0 else Colors.RED
+        self._print(
+            f"    {Colors.DIM}Reward:{Colors.RESET} {ticker} {entry_date}→{exit_date} "
+            f"{action} → {color}{reward:+.4f}{Colors.RESET} "
+            f"(PnL: {raw_pnl*100:+.2f}%)",
+            DETAILED
+        )
+        self._audit("reward_computed", {
+            "ticker": ticker, "entry_date": entry_date, "exit_date": exit_date,
+            "action": action, "reward": reward, "raw_pnl": raw_pnl,
+        })
+
+    def log_experience_added(self, ticker: str, date: str, action: str,
+                              signal_label: str, buffer_idx: int):
+        """Log a new experience added to the buffer."""
+        self._print(
+            f"    {Colors.DIM}Experience #{buffer_idx}: {ticker} {date} "
+            f"S1={signal_label} → {action}{Colors.RESET}",
+            DETAILED
+        )
+
+    def log_icrl_prompt_stats(self, ticker: str, date: str, prompt_length: int,
+                               completed_trades: int, top_k: int, bottom_k: int,
+                               recent_n: int):
+        """Log ICRL prompt statistics."""
+        self._print(
+            f"    {Colors.CYAN}ICRL prompt:{Colors.RESET} {prompt_length:,} chars | "
+            f"history: {completed_trades} trades "
+            f"(top-{top_k}, bottom-{bottom_k}, recent-{recent_n})",
+            NORMAL
+        )
+
+    def log_grpo_training_step(self, step: int, loss: float, kl_div: float,
+                                mean_reward: float, mean_advantage: float = 0.0):
+        """Log a GRPO training step."""
+        self._print(
+            f"    {Colors.YELLOW}GRPO step {step}:{Colors.RESET} "
+            f"loss={loss:.4f} KL={kl_div:.4f} "
+            f"reward={mean_reward:+.4f} adv={mean_advantage:+.4f}",
+            NORMAL
+        )
+        self._audit("grpo_step", {
+            "step": step, "loss": loss, "kl_div": kl_div,
+            "mean_reward": mean_reward,
+        })
+
+    def log_grpo_retrain_trigger(self, completed_count: int, last_retrain: int):
+        """Log that GRPO retraining has been triggered."""
+        self._print(
+            f"\n    {Colors.BOLD}{Colors.YELLOW}GRPO Retrain triggered: "
+            f"{completed_count} completed trades "
+            f"(+{completed_count - last_retrain} since last){Colors.RESET}",
+            MINIMAL
+        )
+
+    def log_experience_buffer_stats(self, stats: Dict):
+        """Log experience buffer summary statistics."""
+        self._print(
+            f"\n  {Colors.BOLD}Experience Buffer:{Colors.RESET} "
+            f"{stats['completed']}/{stats['total_experiences']} completed | "
+            f"mean reward: {stats['mean_reward']:+.4f} | "
+            f"positive: {stats['positive_pct']:.1f}%",
+            MINIMAL
+        )
+
+    def log_mode_comparison(self, summary_by_mode: Dict):
+        """Log comparison table across all modes."""
+        self._print(
+            f"\n{Colors.BOLD}{Colors.CYAN}"
+            f"{'═'*60}\n"
+            f"  MODE COMPARISON\n"
+            f"{'═'*60}{Colors.RESET}",
+            MINIMAL
+        )
+        for mode_name, summary_df in summary_by_mode.items():
+            self._print(f"\n  {Colors.BOLD}{mode_name}:{Colors.RESET}", MINIMAL)
+            self._print(summary_df.to_string(), MINIMAL)
+
     # ── Audit Trail ───────────────────────────────────────────────────────
 
     def _audit(self, event: str, data: Dict = None):

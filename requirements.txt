@@ -7,3 +7,4 @@ requests
 feedparser
 ta
 python-dotenv
+streamlit>=1.30
