@@ -89,62 +89,65 @@ DEBATE PROTOCOL — Replace the <conclusion> section with the following:
 <debate>
 
 <alpha_council>
-You are the ALPHA COUNCIL — portfolio managers who have generated billions in alpha.
-Maximize the return-seeking dimensions (Sharpe, Direction, Conviction, Improvement).
+You are the ALPHA COUNCIL. Your mandate: maximize the return-seeking dimensions
+(Sharpe, Direction, Conviction, Improvement).
 
 For each dimension, make a QUANTIFIED argument:
 
   1. SHARPE: Estimate the expected 5-day return vs. holding-period volatility.
-     Example: "Expected return +1.5% from momentum continuation, vol ~0.8%/day
-     → Sharpe ≈ 1.5/0.8 ≈ 1.9 → supports STRONG BUY."
+     Structure: "Expected return [±X%] from [evidence]. Holding vol ~[Y%]/day.
+     Sharpe ≈ X/Y ≈ [Z] → supports [ACTION]."
 
   2. DIRECTION: State the weight of evidence for direction.
-     Example: "4 of 5 signals align bearish (RSI=72 + MACD crossdown + price below
-     BB upper + SMA50 < SMA200). One dissent: strong earnings beat. Net: bearish
-     with high confidence."
+     Structure: "[N] of [M] signals align [direction] ([list them]).
+     Counter-signals: [list]. Net: [direction] with [high/moderate/low] confidence."
 
   3. CONVICTION: Map your signal alignment to a position size.
-     "Strong alignment (4/5 signals) + fundamental support → high conviction → STRONG BUY."
-     "Mixed signals (2/5 agree) → low conviction → BUY at most or HOLD."
+     "Strong alignment ([N]/[M] signals) + fundamental support → high conviction → STRONG BUY."
+     "Mixed signals ([N]/[M] agree) → low conviction → BUY at most, or HOLD."
      Reference past calibration errors if your Conviction dimension is weak.
 
   4. IMPROVEMENT: Reference SPECIFIC past errors from your trading history.
-     "My last 3 losses were counter-trend bets in strong momentum. This setup is
-     momentum-aligned, so I'm correcting that bias and following the trend."
-     If no history is available, state your reasoning framework and potential blind spots.
+     "My recent losses were [pattern]. This setup differs because [reasoning],
+     so I'm correcting that bias by [specific adjustment]."
+     If no history is available, state your analytical framework and potential blind spots.
 
 Propose: STRONG SELL / SELL / HOLD / BUY / STRONG BUY
 </alpha_council>
 
 <risk_council>
-You are the RISK COUNCIL — world-class risk managers and market structure experts.
-Maximize the discipline dimensions (Risk Discipline, Regime, Coherence, Override).
+You are the RISK COUNCIL. Your mandate: maximize the discipline dimensions
+(Risk Discipline, Regime, Coherence, Override).
 
 For each dimension, challenge the Alpha Council with specific evidence:
 
   1. RISK DISCIPLINE: Assess the current volatility regime.
-     "ATR = X (Yth percentile historically). BB width = Z (above/below average).
+     "ATR = [X]. BB width = [Z] ([above/below] average).
      This is a [HIGH/NORMAL/LOW]-vol regime. Alpha proposes [ACTION] = [W%] position.
      In this vol regime, the reward function [rewards/penalizes] that sizing.
-     Adjust to [ACTION] to optimize Risk Discipline score."
+     Recommendation: [adjust sizing / maintain]."
 
   2. REGIME: Determine market regime and check alignment.
-     "SMA50 vs SMA200: [aligned/crossed]. ADX = X: [trending/range-bound].
+     "SMA50 vs SMA200: [aligned/crossed]. ADX = [X]: [trending/range-bound].
      Price structure: [higher highs / lower lows / sideways].
      Regime: [UPTREND / DOWNTREND / RANGE]. Alpha's thesis [aligns with / fights]
-     this regime. Fighting the regime historically costs ~0.1 on the Regime dimension."
+     this regime."
 
   3. COHERENCE: Stress-test Alpha's reasoning for internal consistency.
      Identify cherry-picked data, ignored contradictions, or logical gaps.
-     Example: "Alpha cites RSI=28 as 'oversold = buy', but ADX=45 shows strong
-     downtrend. In strong trends, RSI stays suppressed — this is momentum
-     continuation, not a mean-reversion setup. Alpha's thesis has a logical gap."
-     If Alpha's reasoning is sound, acknowledge it — do not manufacture objections.
+     Structure: "Alpha cites [indicator]=[value] to support [conclusion], but
+     [other indicator]=[value] contradicts this because [reasoning]."
+     IMPORTANT: If Alpha's reasoning is internally consistent and well-evidenced,
+     state this explicitly. Manufactured disagreement is penalized by the Coherence
+     dimension. Genuine concurrence ("no objections on coherence grounds") is
+     valuable — do not invent objections to justify your role.
 
-  4. OVERRIDE: If the action disagrees with Algorithm S1, demand justification.
-     "S1 signal = [SIGNAL]. Alpha proposes [ACTION]. This is an override.
-     Historical override success rate has been ~[X]%. Unless the evidence is
-     overwhelming, overrides destroy value. [Justified / Not justified]."
+  4. OVERRIDE: Check the <signal_reference> section in the market data for the
+     current S1 signal. If Alpha's proposed action disagrees with S1, demand
+     justification. "S1 = [SIGNAL]. Alpha proposes [ACTION]. This is an override.
+     Based on my Override dimension history, overrides have been [net positive /
+     net negative]. [Justified / Not justified] because [specific evidence]."
+     If no history exists, apply a strong prior that overrides are net negative.
 
 If warranted, propose a different action or different sizing.
 </risk_council>
@@ -174,6 +177,8 @@ CALIBRATION FROM HISTORY — Study the <trading_history> section below:
   • If Override scores are negative → default to following S1 unless evidence is extreme
   • If Coherence scores are negative → include more counter-arguments ("what could go wrong")
   • If Conviction is weak → be more deliberate about mapping certainty to sizing
+  • If no trading history is available yet, apply equal weight to both councils
+    and follow S1 unless you have strong independent evidence for an override
 </experience_reflection>
 """
 

@@ -534,14 +534,33 @@ class GRPOTrainer:
                     _conv = "low conviction — signals are mixed or insufficient"
                     _wt = "0%"
 
+                # Extract actual data from state for grounded reasoning
+                _price = exp.state_snapshot.get("price_summary", {})
+                _tech = exp.state_snapshot.get("technical_indicators", {})
+                _rsi = _tech.get("rsi")
+                _adx = _tech.get("adx")
+                _chg5 = _price.get("price_change_5d")
+
+                _data_line = ""
+                _data_parts = []
+                if _chg5 is not None:
+                    _data_parts.append(f"5d change: {_chg5}%")
+                if _rsi is not None:
+                    _data_parts.append(f"RSI: {_rsi:.0f}")
+                if _adx is not None:
+                    _data_parts.append(f"ADX: {_adx:.0f}")
+                if _data_parts:
+                    _data_line = f"Key data: {' | '.join(_data_parts)}.\n"
+
                 target = (
                     f"<think>\n"
                     f"Analyzing {exp.ticker} on {exp.date}:\n"
+                    f"{_data_line}"
                     f"S1 signal: {exp.signal_label} — volatility-normalized momentum "
                     f"indicates {_dir} pressure over ~5 trading days.\n"
                     f"Position sizing: {_wt} ({_conv}).\n"
-                    f"The signal strength matches the technical setup. "
-                    f"Volatility regime does not warrant an override.\n"
+                    f"The technical indicators support this direction. "
+                    f"Current volatility does not warrant an override.\n"
                     f"Key risk: signal could be noise if volatility spikes or regime shifts.\n"
                     f"</think>\n"
                     f"DECISION: {exp.signal_label}<|im_end|>"

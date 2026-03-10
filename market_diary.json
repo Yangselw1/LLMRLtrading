@@ -1,0 +1,39 @@
+{
+  "entries": {
+    "2026-03-09": {
+      "macro": {
+        "spy_change_1d": 0.88,
+        "qqq_change_1d": 1.34,
+        "vix": 25.5,
+        "yield_10y": 4.14,
+        "yield_10y_change_1d": 0.07,
+        "dxy_change_1d": -0.23,
+        "oil_change_1d": -4.51,
+        "gold_change_1d": -0.02,
+        "sector_changes": {
+          "Tech": 1.8,
+          "Financials": -0.47,
+          "Energy": -0.44,
+          "Healthcare": 1.02,
+          "Consumer Disc": 0.13,
+          "Consumer Staples": 0.22,
+          "Utilities": 0.24
+        },
+        "risk_regime": "risk_off",
+        "vol_regime": "high",
+        "global_headlines": [
+          "How Healthy Is the US Economy? Here\u2019s What the Top Economic Indicators Say - Morningstar",
+          "Turns out the Trump economy is not doing so well after all - Vox",
+          "From War Surge to Slump: Is the Russian Economy Heading Toward Recession? - The Moscow Times",
+          "The Fed releases its latest interest rate decision Wednesday. Here's what to expect - CNBC",
+          "Fed holds interest rates steady for first time since July - CNN",
+          "Stock Market News for Jan. 28, 2026: Federal Reserve Holds Rates Steady; Nasdaq Edges Higher - WSJ",
+          "US-China standoff: Sanctions and supply chain risks - Oxford Economics"
+        ]
+      },
+      "tickers": {},
+      "source": "capture"
+    }
+  },
+  "last_updated": "2026-03-09T20:46:49.020535"
+}
